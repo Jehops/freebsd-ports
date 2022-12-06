@@ -36,22 +36,22 @@
 ;; This file takes all necessary actions. The easiest way is to load
 ;; it in your Lisp every time it starts, by putting
 ;;
-;;  (load "/usr/local/etc/asdf-init.lisp")
+;;  (load "%%PREFIX%%/etc/asdf-init.lisp")
 ;;
 ;; in your init file.
 ;;
 ;; Each Lisp implementation has its own files where this can be done:
 ;;
 ;; CLISP:
-;;   /usr/local/lib/clisp/config.lisp
+;;   %%PREFIX%%/lib/clisp/config.lisp
 ;;   ~/.clisprc
 ;;
 ;; CMUCL:
-;;   /usr/local/lib/cmucl/lib/cmucl/lib/site-init.lisp
+;;   %%PREFIX%%/lib/cmucl/lib/cmucl/lib/site-init.lisp
 ;;   ~/.cmucl-init.lisp
 ;;
 ;; SBCL:
-;;   /usr/local/etc/sbclrc
+;;   %%PREFIX%%/etc/sbclrc
 ;;   ~/.sbclrc
 ;;
 ;; CLOZURE CL / OPENMCL:
@@ -71,7 +71,7 @@
 ;; We mess around with asdf:output-files in interesting ways to
 ;; enforce a filesystem layout that works without multiple Lisp
 ;; implementations overwriting their fasls. Basically, each lib has
-;; its own directory in /usr/local/lib/common-lisp, initially
+;; its own directory in %%PREFIX%%/lib/common-lisp, initially
 ;; containing its sources. Each fasl port will create an
 ;; implementation-specific subdirectory where all its fasls go, for
 ;; example ./cmuclfasl, ./clispfasl etc.
@@ -129,16 +129,11 @@
 ;;;; Paths
 
 (defvar *asdf-pathname*
-  ;; Clozure CL's internal asdf
-  #+openmcl "/usr/local/lib/ccl/tools/asdf"
-  ;; SBCL's internal asdf
-  #+sbcl "/usr/local/lib/sbcl/asdf/asdf"
-  ;; CMU and clisp
-  #-(or openmcl sbcl) "/usr/local/lib/common-lisp/asdf/asdf"
+  "%%ASDF_PATHNAME%%"
   "Path of the ASDF library")
 
 (defvar *system-registry*
-  "/usr/local/lib/common-lisp/system-registry/"
+  "%%ASDF_REGISTRY%%/"
   "FreeBSD's contribution to the central registry for ASDF system
 definitions.  This will be added to asdf:*central-registry*, you
 should modify that in order to add other directories.")
@@ -225,7 +220,7 @@ LISP-SPECIFIC-FASL-SUBDIR as well."
 
 (pushnew :inherit-configuration *freebsd-output-translations*)
 
-(dolist (path (directory "/usr/local/lib/common-lisp/*/"))
+(dolist (path (directory "%%PREFIX%%/lib/common-lisp/*/"))
   (let ((source (make-pathname
                  :directory (append (pathname-directory path)
                                     (list :wild-inferiors))))
@@ -242,7 +237,7 @@ LISP-SPECIFIC-FASL-SUBDIR as well."
       ;; If we are building a FreeBSD port, all the compiled fasl files
       ;; should be redirected to WRKSRC.
       (let ((source (make-pathname
-		     :directory (append (pathname-directory #P"/usr/local/lib/common-lisp/")
+		     :directory (append (pathname-directory #P"%%PREFIX%%/lib/common-lisp/")
 					(list portname :wild-inferiors))))
             (target (make-pathname
 		     :directory (append (pathname-directory wrksrc)
