@@ -1,0 +1,29 @@
+---
+env:
+  CIRRUS_CLONE_DEPTH: 1
+
+task:
+  only_if: $CIRRUS_PR != ''
+  persistent_worker:
+    labels:
+      distro: freebsd
+  clone_script: |
+    if [ ! -z "$CIRRUS_PR" ]; then
+      git clone --depth 1 https://x-access-token:${CIRRUS_REPO_CLONE_TOKEN}@github.com/${CIRRUS_REPO_FULL_NAME}.git $CIRRUS_WORKING_DIR
+      git fetch origin pull/$CIRRUS_PR/head:pull/$CIRRUS_PR
+      git reset --hard $CIRRUS_CHANGE_IN_REPO
+      if [ ! -f "${CIRRUS_WORKING_DIR}"/"${CIRRUS_PR_TITLE%%:*}"/Makefile ]; then
+        echo "Add proper PR TITLE like <CATEGORY>/<PORTNAME>: YOUR CHANGES"
+        exit 1
+      fi
+    else
+      echo "Only for PR"
+      exit 1
+    fi
+  debug_script:
+    - echo $CIRRUS_BRANCH
+  test_script:
+    - poudriere ports -c -m null -M ${CIRRUS_WORKING_DIR} -p ${CIRRUS_PR}
+    - poudriere testport -j 142amd64 -p ${CIRRUS_PR} ${CIRRUS_PR_TITLE%%:*}
+    - poudriere pkgclean -j 142amd64 -p ${CIRRUS_PR} -A -y
+    - poudriere ports -d -k -p ${CIRRUS_PR}
